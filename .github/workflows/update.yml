@@ -2,8 +2,8 @@ name: Update TXO snapshots
 
 on:
   schedule:
-    # 18:30 台北時間 = 10:30 UTC（日盤資料，約13:45/16:15收盤後可查）
-    - cron: '30 10 * * *'
+    # 16:30 台北時間 = 08:30 UTC（日盤資料，約13:45收盤後下午4點可查，留30分鐘緩衝）
+    - cron: '30 8 * * *'
     # 07:30 台北時間 = 23:30 UTC 前一天（盤後/夜盤資料，約當日07:00後可查）
     - cron: '30 23 * * *'
   workflow_dispatch:
@@ -45,7 +45,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "session=${{ inputs.session }}" >> "$GITHUB_OUTPUT"
             echo "periods=${{ inputs.periods }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "30 10 * * *" ]; then
+          elif [ "${{ github.event.schedule }}" = "30 8 * * *" ]; then
             echo "session=day" >> "$GITHUB_OUTPUT"
             echo "periods=4" >> "$GITHUB_OUTPUT"
           else

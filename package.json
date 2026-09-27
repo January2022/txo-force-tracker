@@ -1,0 +1,11 @@
+{
+  "name": "txo-force-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch": "node scripts/fetch_and_build.mjs"
+  },
+  "dependencies": {
+    "iconv-lite": "^0.6.3"
+  }
+}

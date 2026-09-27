@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>TXO力道站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#0a0d14; --surface:#111621; --surface2:#171d2c; --surface3:#1e2638;
+  --border:#252e44; --border-soft:#1a2133;
+  --text:#e8ecf6; --text-dim:#8b96b8; --text-faint:#4d5875;
+  --accent:#4fd8c4; --accent-dim:#2a5f57;
+  --bull:#ff5a6e; --bull-soft:rgba(255,90,110,.14);
+  --bear:#2ecc82; --bear-soft:rgba(46,204,130,.14);
+  --ok:#2ecc82; --err:#ff5a6e;
+  --warn:#f5b942; --atm:#f5b942;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{ background:var(--bg); color:var(--text); font-family:'Inter','Noto Sans TC',system-ui,sans-serif; font-size:13px; line-height:1.45; }
+.mono,.num{font-family:'JetBrains Mono','Inter',monospace; font-variant-numeric:tabular-nums;}
+
+.topbar{ padding:14px 18px 12px; border-bottom:1px solid var(--border-soft); position:sticky; top:0; background:var(--bg); z-index:200; display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.topbar-title{font-size:17px; font-weight:800; letter-spacing:.2px}
+.topbar-title span{color:var(--accent)}
+.topbar-sub{font-size:11px; color:var(--text-dim); margin-top:2px}
+.conn{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-dim)}
+.conn .dot{width:7px; height:7px; border-radius:50%; background:var(--text-faint)}
+.conn.on .dot{background:var(--ok); box-shadow:0 0 6px var(--ok)}
+.conn.off .dot{background:var(--err)}
+
+.ctrl{display:flex; gap:6px; padding:8px 18px 0; flex-wrap:wrap; align-items:center}
+.ctrl .glabel{font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin-right:2px}
+.tabs{display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; flex-wrap:wrap}
+.tabs::-webkit-scrollbar{display:none}
+.tab{ flex-shrink:0; font-size:11px; padding:5px 12px; border-radius:20px; border:1px solid var(--border); cursor:pointer; color:var(--text-dim); background:var(--surface); font-family:inherit; white-space:nowrap; transition:all .12s; text-align:left; }
+.tab:hover{border-color:var(--accent-dim)}
+.tab.on{background:var(--accent-dim); color:#d4fff6; border-color:var(--accent)}
+.tab small{display:block; font-size:9px; color:var(--text-faint); font-family:'JetBrains Mono',monospace}
+.tab.on small{color:#a8f5e6}
+
+.panel{background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); margin:12px 18px; padding:14px; display:flex; flex-direction:column; gap:10px}
+.panel h2{font-size:12.5px; font-weight:700; margin:0; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em}
+.panel .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.panel .row.spread{justify-content:space-between}
+select{ font:inherit; color:var(--text); background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:5px 8px; }
+button.btn{ font:inherit; color:var(--text); background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:5px 12px; cursor:pointer; }
+button.btn:hover{border-color:var(--accent-dim)}
+.toast{font-size:11px; color:var(--accent)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media (max-width:800px){.grid2{grid-template-columns:1fr}}
+.kv{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px}
+.kv div{background:var(--surface2); border-radius:8px; padding:8px 10px}
+.kv .label{font-size:10.5px; color:var(--text-dim)}
+.kv b{display:block; font-family:'JetBrains Mono',monospace; font-size:17px; margin-top:2px}
+.insights{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:5px; font-size:12px}
+.insights li{line-height:1.6}
+textarea#aiText{ width:100%; min-height:160px; font-family:'JetBrains Mono',monospace; font-size:11px; background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:10px; resize:vertical; }
+svg.chart text{fill:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:10px}
+.legend{display:flex; gap:12px; margin:0 18px 4px; font-size:10.5px; color:var(--text-dim); flex-wrap:wrap}
+.legend b{color:var(--text)}
+
+.tbl-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--border-soft); border-radius:var(--radius)}
+table{border-collapse:collapse; white-space:nowrap; font-size:11.5px; width:100%}
+th,td{border:1px solid var(--border-soft); padding:4px 8px; text-align:right}
+th{background:var(--surface2); font-size:9.5px; font-weight:600; color:var(--text-dim); text-align:center; position:sticky; top:0; z-index:10}
+td:first-child,th:first-child{text-align:left}
+.bull{color:var(--bull)} .bear{color:var(--bear)} .dim{color:var(--text-faint)}
+.pill{display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:99px}
+.pill.bull{background:var(--bull-soft); color:var(--bull)} .pill.bear{background:var(--bear-soft); color:var(--bear)} .pill.neu{background:var(--surface2); color:var(--text-dim)}
+tr.atmrow td{background:var(--surface3)}
+.split{border-left:2px solid var(--border)}
+.bar{display:inline-block; height:8px; border-radius:2px; vertical-align:middle; margin-left:4px}
+.empty{text-align:center; padding:70px 20px; color:var(--text-faint)}
+.empty .ic{font-size:38px; opacity:.35; margin-bottom:6px}
+footer.note{margin:30px 18px 24px; font-size:10.5px; color:var(--text-faint); line-height:1.6; border-top:1px solid var(--border-soft); padding-top:12px}
+footer.note a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">TXO<span>力道</span>站</div>
+    <div class="topbar-sub" id="sub">載入中…</div>
+  </div>
+  <div class="conn off" id="conn"><span class="dot"></span><span id="connTxt">載入中…</span></div>
+</div>
+
+<div class="ctrl"><span class="glabel">日期</span><div class="tabs" id="dt"></div></div>
+<div class="ctrl" style="padding-bottom:8px"><span class="glabel">時段</span><div class="tabs" id="st"></div>
+  <span class="glabel" style="margin-left:10px">單位</span><div class="tabs" id="ut"></div>
+</div>
+
+<div class="legend">
+  <span><b style="color:var(--bull)">■</b> 偏多（紅）</span>
+  <span><b style="color:var(--bear)">■</b> 偏空（綠）</span>
+  <span>力道 = (買Call－賣Call) － (買Put－賣Put)</span>
+</div>
+
+<div class="panel" id="overviewPanel" style="display:none">
+  <div class="row spread"><h2>綜合力道總覽</h2></div>
+  <div class="tbl-wrap"><table id="sumTable"></table></div>
+</div>
+
+<div id="body"></div>
+
+<footer class="note">
+  資料來源：臺灣期貨交易所「期貨商買賣日報表－選擇權」，由 <a href="https://github.com/January2022/txo-force-tracker" target="_blank" rel="noopener">GitHub Actions</a> 每日自動下載與分析（約日盤18:30、夜盤07:30 台北時間各跑一次），不需要任何人手動上傳。
+  分類依期貨商代號推估：F034（澳帝華期貨，主要造市商）單獨列出、不計入法人合計；證券商（代號S開頭）歸為自營；外商券商歸外資；公股行庫體系歸八大行庫；其餘期貨商歸「期貨經紀」。
+  同一履約價、同一成交價若列出多家買賣方期貨商，成交量平均分給列出的期貨商（期交所未提供個別分量，為近似值）。推估價平取 Call／Put 均價最接近的履約價，以 K+C－P 推算。各履約價明細表僅顯示成交量最高的前 40 檔，總覽與力道判讀則以完整資料計算。
+  分類規則寫死在 <code>scripts/lib.mjs</code>，如需調整請直接修改該檔案並提交。僅供研究參考，非投資建議。
+</footer>
+
+<script>
+// ---------------------------------------------------------------------------
+// Rendering logic — identical math to the shared claude.ai dashboard, adapted
+// to read pre-computed JSON snapshots (produced by scripts/fetch_and_build.mjs)
+// instead of a live shared database.
+// ---------------------------------------------------------------------------
+const INST=['外資','自營','八大行庫'];
+const COLS=['外資','自營','八大行庫','法人合計','期貨經紀','造市商'];
+
+function round1(n){ return Math.round(n*10)/10; }
+function ddisp(d){ const s=String(d); return s.length===8 ? s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8) : d; }
+function fmt(x,dp){ const d=dp==null?(unit==='lots'?0:1):dp; const v=Math.abs(x)<(d?0.05:0.5)?0:x; return (v>0?'+':'')+v.toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function cls(x){ return Math.abs(x)<1e-9?'dim':(x>0?'bull':'bear'); }
+function unitLabel(){ return unit==='lots'?'口':'萬'; }
+function val(o){ if(!o) return 0; return unit==='lots' ? (Array.isArray(o)?o[0]:o.n) : (Array.isArray(o)?o[1]:o.m)/1e4; }
+
+function expInfo(exp){
+  const m=exp.match(/^(\d{4})(\d{2})([WF])?(\d)?$/);
+  if(!m) return {label:exp,date:null,t:9e15};
+  const y=+m[1], mo=+m[2]-1;
+  const nth=(dow,n)=>{ const d=new Date(Date.UTC(y,mo,1)); const off=(dow-d.getUTCDay()+7)%7; return new Date(Date.UTC(y,mo,1+off+7*(n-1))); };
+  let dt,label;
+  if(!m[3]){ dt=nth(3,3); label=(mo+1)+'月 月選'; }
+  else if(m[3]==='W'){ dt=nth(3,+m[4]); label=(mo+1)+'月 第'+m[4]+'週三'; }
+  else { dt=nth(5,+m[4]); label=(mo+1)+'月 第'+m[4]+'週五'; }
+  const ds=(dt.getUTCMonth()+1)+'/'+dt.getUTCDate();
+  return {label,date:ds,t:dt.getTime()+(m[3]?0:1)};
+}
+
+let index=[], snapshots={}, cDate=null, cSess=null, cExp=null, cChartGroup='法人合計', cTopN=40;
+let unit='lots';
+try{ unit=localStorage.getItem('txo_unit_v2')||'lots'; }catch(e){}
+
+async function loadIndex(){
+  const connEl=document.getElementById('conn'), connTxt=document.getElementById('connTxt');
+  try{
+    const res=await fetch('data/index.json',{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    index=await res.json();
+  }catch(e){
+    connEl.className='conn off'; connTxt.textContent='讀取資料索引失敗：'+e.message;
+    document.getElementById('sub').textContent='尚無資料，等待第一次自動更新';
+    return;
+  }
+  connEl.className='conn on'; connTxt.textContent='自動更新中（GitHub Actions）';
+  renderAll();
+}
+async function loadSnapshot(entry){
+  const key=entry.key;
+  if(snapshots[key]) return snapshots[key];
+  const res=await fetch('data/'+entry.file,{cache:'no-store'});
+  const data=await res.json();
+  snapshots[key]=data;
+  return data;
+}
+
+function renderAll(){
+  document.getElementById('ut').innerHTML =
+    `<button class="tab ${unit==='lots'?'on':''}" onclick="setUnit('lots')">口數</button>` +
+    `<button class="tab ${unit==='prem'?'on':''}" onclick="setUnit('prem')">權利金(萬)</button>`;
+  const dates=[...new Set(index.map(e=>e.date))].sort().reverse();
+  if(!dates.length){
+    document.getElementById('body').innerHTML='<div class="empty"><div class="ic">📊</div><div>尚無資料，等待第一次自動更新</div></div>';
+    document.getElementById('dt').innerHTML=''; document.getElementById('st').innerHTML='';
+    document.getElementById('overviewPanel').style.display='none';
+    return;
+  }
+  if(!cDate || !dates.includes(cDate)) cDate=dates[0];
+  const sessOpts=index.filter(e=>e.date===cDate).map(e=>e.session);
+  if(!cSess || !sessOpts.includes(cSess)) cSess = sessOpts.includes('day') ? 'day' : sessOpts[0];
+
+  document.getElementById('dt').innerHTML = dates.map(d=>`<button class="tab ${d===cDate?'on':''}" onclick="setDate('${d}')">${ddisp(d)}</button>`).join('');
+  document.getElementById('st').innerHTML =
+    (sessOpts.includes('day') ? `<button class="tab ${cSess==='day'?'on':''}" onclick="setSess('day')">☀️ 日盤</button>` : '') +
+    (sessOpts.includes('night') ? `<button class="tab ${cSess==='night'?'on':''}" onclick="setSess('night')">🌙 夜盤</button>` : '');
+
+  const entry=index.find(e=>e.date===cDate && e.session===cSess);
+  if(!entry){ document.getElementById('overviewPanel').style.display='none'; document.getElementById('body').innerHTML='<div class="empty">此時段尚無資料</div>'; return; }
+  loadSnapshot(entry).then(snap=>{
+    document.getElementById('sub').textContent = `${ddisp(snap.date)} · ${snap.session==='day'?'日盤':'夜盤'} · ${snap.exps.length}個期別 · ${new Date(snap.uploadedAt).toLocaleString('zh-TW',{hour12:false})} 自動更新`;
+    const exps=[...snap.exps].sort((a,b)=>expInfo(a.exp).t-expInfo(b.exp).t);
+    renderOverview(exps);
+    if(!cExp || !exps.find(e=>e.exp===cExp)) cExp=exps[0].exp;
+    renderDetailSection(exps);
+  });
+}
+
+function renderOverview(exps){
+  const panel=document.getElementById('overviewPanel'); panel.style.display='flex';
+  let h='<thead><tr><th>到期</th>'+COLS.map(c=>'<th>'+c+'</th>').join('')+'<th>法人判讀</th><th>推估價平</th><th>成交量 C／P</th></tr></thead><tbody>';
+  for(const E of exps){
+    const info=expInfo(E.exp);
+    h+=`<tr><td><b>${E.exp}</b><br><small class="dim">${info.label}${info.date?' · '+info.date:''}</small></td>`;
+    for(const g of COLS){
+      const t=E.totals[g]||{C:{n:0,m:0},P:{n:0,m:0}};
+      const c=val(t.C), p=val(t.P), f=c-p;
+      h+=`<td class="${cls(f)} num">${f?fmt(f):'<span class="dim">·</span>'}<br><small class="dim">C ${fmt(c)} / P ${fmt(p)}</small></td>`;
+    }
+    const tI=E.totals['法人合計']||{C:{n:0,m:0,gr:0},P:{n:0,m:0,gr:0}};
+    const grTotal = unit==='lots' ? (tI.C.gr+tI.P.gr) : (Math.abs(tI.C.m/1e4)+Math.abs(tI.P.m/1e4));
+    const fI = val(tI.C)-val(tI.P);
+    const pct = grTotal ? fI/grTotal*100 : 0;
+    const lab = Math.abs(pct)<8 ? '<span class="pill neu">中性</span>' : (pct>0 ? `<span class="pill bull">偏多 ${pct.toFixed(0)}%</span>` : `<span class="pill bear">偏空 ${Math.abs(pct).toFixed(0)}%</span>`);
+    h+=`<td>${lab}</td><td class="num">${E.atm?E.atm.F.toLocaleString():'—'}</td><td class="num dim">${E.vol.C.toLocaleString()} / ${E.vol.P.toLocaleString()}</td></tr>`;
+  }
+  h+='</tbody>';
+  document.getElementById('sumTable').innerHTML=h;
+}
+
+function renderDetailSection(exps){
+  const E=exps.find(e=>e.exp===cExp);
+  const body=document.getElementById('body');
+  let h='<div class="ctrl" style="padding:0 0 8px"><div class="tabs" id="expTabs"></div></div>';
+  h+='<div class="panel"><div class="kv" id="kv"></div></div>';
+  h+='<div class="panel"><div class="row spread"><h2>力道長條圖</h2><div class="row">'
+    +'<span class="glabel" style="margin:0">對象</span><select id="chartSel" onchange="setChartGroup(this.value)"></select>'
+    +'<span class="glabel" style="margin:0">履約價</span><select id="topNSel" onchange="setTopN(this.value)"><option value="20">最多20檔</option><option value="40" selected>最多40檔</option></select>'
+    +'</div></div><div id="chartHost"></div></div>';
+  h+='<div class="panel"><div class="grid2"><div><h2>重點籌碼</h2><ul class="insights" id="insights"></ul></div>'
+    +'<div><div class="row spread"><h2>給 AI 的文字摘要</h2><div class="row"><span class="toast" id="aiToast"></span><button class="btn" onclick="copyAiText()">複製</button></div></div><textarea id="aiText" readonly></textarea></div></div></div>';
+  h+='<div class="panel"><h2>各履約價明細</h2><div class="tbl-wrap"><table id="strikeTable"></table></div></div>';
+  body.innerHTML=h;
+
+  document.getElementById('expTabs').innerHTML = exps.map(e=>{
+    const info=expInfo(e.exp);
+    const missing = e.has.C&&e.has.P ? '' : ` <span class="dim">(缺${e.has.C?'P':'C'})</span>`;
+    return `<button class="tab ${e.exp===cExp?'on':''}" onclick="setExp('${e.exp}')">${e.exp}${missing}<small>${info.label}${info.date?' '+info.date:''}</small></button>`;
+  }).join('');
+
+  if(!E) return;
+  renderKV(E);
+  renderChart(E);
+  renderInsights(E, exps);
+  renderStrikeTable(E);
+}
+
+function renderKV(E){
+  const kv=document.getElementById('kv');
+  let h='';
+  for(const g of ['法人合計','外資','自營','八大行庫']){
+    const t=E.totals[g]||{C:{n:0,m:0},P:{n:0,m:0}};
+    const f=val(t.C)-val(t.P);
+    h+=`<div><span class="label">${g} 力道</span><b class="${cls(f)}">${fmt(f)} <span style="font-size:12px">${unitLabel()}</span></b></div>`;
+  }
+  h+=`<div><span class="label">推估價平</span><b>${E.atm?E.atm.F.toLocaleString():'—'}</b></div>`;
+  kv.innerHTML=h;
+}
+
+function renderChart(E){
+  const sel=document.getElementById('chartSel');
+  sel.innerHTML=COLS.map(g=>`<option value="${g}" ${g===cChartGroup?'selected':''}>${g}</option>`).join('');
+  document.getElementById('topNSel').value=String(cTopN);
+  const host=document.getElementById('chartHost');
+  const ks=Object.keys({...E.strikes.C,...E.strikes.P}).map(Number).sort((a,b)=>a-b).slice(0, cTopN===40?40:20);
+  if(!ks.length){ host.innerHTML='<div class="dim" style="padding:10px 0">無資料</div>'; return; }
+  const fk = k => { const c=E.strikes.C[k]&&E.strikes.C[k].cats[cChartGroup]; const p=E.strikes.P[k]&&E.strikes.P[k].cats[cChartGroup]; return val(c)-val(p); };
+  const vals=ks.map(fk);
+  const maxAbs=Math.max(1, ...vals.map(v=>Math.abs(v)));
+  const rowH=18, padL=70, padR=60, w=1000, chartW=w-padL-padR;
+  const hgt=ks.length*rowH+20;
+  const mid=padL+chartW/2;
+  const scale=(chartW/2-4)/maxAbs;
+  let svg=`<svg class="chart" viewBox="0 0 ${w} ${hgt}" style="width:100%;height:auto">`;
+  svg+=`<line x1="${mid}" y1="4" x2="${mid}" y2="${hgt-4}" stroke="var(--border)" stroke-width="1"/>`;
+  if(E.atm && ks.length>1 && E.atm.F>=ks[0] && E.atm.F<=ks[ks.length-1]){
+    let idx=0; for(let i=0;i<ks.length-1;i++){ if(E.atm.F>=ks[i]&&E.atm.F<=ks[i+1]){ idx=i+(E.atm.F-ks[i])/(ks[i+1]-ks[i]); break; } }
+    const ay=10+idx*rowH;
+    svg+=`<line x1="4" y1="${ay}" x2="${w-4}" y2="${ay}" stroke="var(--atm)" stroke-dasharray="4,3" stroke-width="1.2"/><text x="${w-6}" y="${ay-4}" text-anchor="end" fill="var(--atm)">價平≈${Math.round(E.atm.F).toLocaleString()}</text>`;
+  }
+  ks.forEach((k,i)=>{
+    const y=10+i*rowH, v=fk(k), bw=Math.abs(v)*scale, x=v>=0?mid:mid-bw;
+    const color=v>0?'var(--bull)':v<0?'var(--bear)':'var(--text-faint)';
+    svg+=`<text x="${padL-8}" y="${y+9}" text-anchor="end">${k.toLocaleString()}</text>`;
+    if(bw>0.5) svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${rowH-5}" fill="${color}" opacity="0.85"/>`;
+    svg+=`<text x="${v>=0?mid+bw+6:mid-bw-6}" y="${y+9}" text-anchor="${v>=0?'start':'end'}" fill="${color}">${fmt(v)}</text>`;
+  });
+  svg+='</svg>';
+  host.innerHTML=svg;
+}
+
+function renderInsights(E, allExps){
+  const ul=document.getElementById('insights');
+  const lines=[];
+  for(const g of INST){
+    const mv=E.moversInst[g];
+    const f=val(E.totals[g].C)-val(E.totals[g].P);
+    const t=(arr,verb)=> arr.length ? verb+' '+arr.map(x=>x.k.toLocaleString()+'('+fmt(Math.abs(unit==='lots'?x.n:x.m/1e4)).replace('+','')+')').join('、') : '';
+    const parts=[t(mv.bc,'買Call'),t(mv.sc,'賣Call'),t(mv.bp,'買Put'),t(mv.sp,'賣Put')].filter(Boolean);
+    if(!parts.length) continue;
+    lines.push(`<li><b>${g}</b> <span class="${cls(f)} num">${fmt(f)}${unitLabel()}</span>：${parts.join('；')}</li>`);
+  }
+  const x=[];
+  if(E.moversAll.sc) x.push(`法人賣Call最多在 <b class="num">${E.moversAll.sc.k.toLocaleString()}</b>（壓力參考）`);
+  if(E.moversAll.sp) x.push(`法人賣Put最多在 <b class="num">${E.moversAll.sp.k.toLocaleString()}</b>（支撐參考）`);
+  if(E.moversAll.bc) x.push(`買Call集中 <b class="num">${E.moversAll.bc.k.toLocaleString()}</b>`);
+  if(E.moversAll.bp) x.push(`買Put集中 <b class="num">${E.moversAll.bp.k.toLocaleString()}</b>`);
+  if(x.length) lines.push('<li>'+x.join('，')+'。</li>');
+  ul.innerHTML = lines.length ? lines.join('') : '<li class="dim">此週期法人成交很少。</li>';
+  document.getElementById('aiText').value = buildAiText(allExps);
+}
+
+function buildAiText(exps){
+  let s=`台指選擇權(TXO) 期貨商籌碼摘要\n單位：${unit==='lots'?'口':'萬元權利金'}；力道=(Call淨買)-(Put淨買)，正偏多、負偏空\n分類：外資=外商券商；自營=證券商(S開頭)；八大行庫=公股行庫體系；造市商=澳帝華(不計入法人)；期貨經紀=其餘期貨商\n\n`;
+  for(const E of exps){
+    const info=expInfo(E.exp);
+    s+=`【${E.exp} ${info.label}${info.date?' 到期'+info.date:''}】推估價平 ${E.atm?E.atm.F:'—'}，成交量 C ${E.vol.C} / P ${E.vol.P}\n`;
+    s+='  力道：'+COLS.map(g=>{ const t=E.totals[g]||{C:{n:0,m:0},P:{n:0,m:0}}; const c=val(t.C),p=val(t.P); return g+' '+fmt(c-p)+'(C'+fmt(c)+'/P'+fmt(p)+')'; }).join('；')+'\n';
+    for(const g of INST){
+      const mv=E.moversInst[g]; const f=val(E.totals[g].C)-val(E.totals[g].P);
+      const t=(arr,verb)=> arr.length ? verb+' '+arr.map(x=>x.k+'('+fmt(Math.abs(unit==='lots'?x.n:x.m/1e4)).replace('+','')+')').join('、') : '';
+      const parts=[t(mv.bc,'買Call'),t(mv.sc,'賣Call'),t(mv.bp,'買Put'),t(mv.sp,'賣Put')].filter(Boolean);
+      if(parts.length) s+=`  ${g}：${parts.join('；')}\n`;
+    }
+    if(E.moversAll.sc||E.moversAll.sp) s+=`  法人壓力(賣Call最多) ${E.moversAll.sc?E.moversAll.sc.k:'—'}；支撐(賣Put最多) ${E.moversAll.sp?E.moversAll.sp.k:'—'}\n`;
+    s+='\n';
+  }
+  return s.trim();
+}
+function copyAiText(){
+  const ta=document.getElementById('aiText'), toast=document.getElementById('aiToast');
+  const done=()=>{ toast.textContent='已複製'; setTimeout(()=>toast.textContent='',1500); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done).catch(()=>{ ta.select(); document.execCommand('copy'); done(); });
+  else { ta.select(); document.execCommand('copy'); done(); }
+}
+
+function renderStrikeTable(E){
+  const tb=document.getElementById('strikeTable');
+  const ks=[...new Set([...Object.keys(E.strikes.C),...Object.keys(E.strikes.P)].map(Number))].sort((a,b)=>a-b);
+  const G4=['外資','自營','八大行庫','法人合計'];
+  let maxF=1;
+  for(const k of ks){ const c=E.strikes.C[k]&&E.strikes.C[k].cats['法人合計']; const p=E.strikes.P[k]&&E.strikes.P[k].cats['法人合計']; const f=Math.abs(val(c)-val(p)); if(f>maxF) maxF=f; }
+  let h='<thead><tr><th>履約價</th><th class="split">Call外資</th><th>Call自營</th><th>Call八大</th><th>Call法人</th><th class="split">Put外資</th><th>Put自營</th><th>Put八大</th><th>Put法人</th><th class="split">外資力道</th><th>自營力道</th><th>八大力道</th><th>法人綜合</th><th class="split">成交量C/P</th></tr></thead><tbody>';
+  const atmK = E.atm ? ks.reduce((a,b)=>Math.abs(b-E.atm.F)<Math.abs(a-E.atm.F)?b:a, ks[0]) : null;
+  for(const k of [...ks].reverse()){
+    const c=E.strikes.C[k]||{cats:{}}, p=E.strikes.P[k]||{cats:{}};
+    h+=`<tr class="${k===atmK?'atmrow':''}"><td>${k.toLocaleString()}${k===atmK?' <span class="dim">價平</span>':''}</td>`;
+    G4.forEach((x,i)=>{ const v=val(c.cats[x]); h+=`<td class="num ${cls(v)}${i===0?' split':''}">${v?fmt(v):'<span class="dim">·</span>'}</td>`; });
+    G4.forEach((x,i)=>{ const v=val(p.cats[x]); h+=`<td class="num ${cls(-v)}${i===0?' split':''}">${v?fmt(v):'<span class="dim">·</span>'}</td>`; });
+    G4.forEach((x,i)=>{
+      const f=val(c.cats[x])-val(p.cats[x]);
+      let bar=''; if(x==='法人合計' && f){ const w=Math.max(2,Math.round(Math.abs(f)/maxF*48)); bar=` <span class="bar" style="width:${w}px;background:var(--${f>0?'bull':'bear'})"></span>`; }
+      h+=`<td class="num ${cls(f)}${i===0?' split':''}">${f?fmt(f):'<span class="dim">·</span>'}${bar}</td>`;
+    });
+    h+=`<td class="num dim split">${c.vol||0} / ${p.vol||0}</td></tr>`;
+  }
+  h+='</tbody><caption style="caption-side:top;text-align:left;padding:4px 0 8px" class="dim">Call／Put欄為淨買（正=買進、負=賣出），顏色已換算成對行情方向：買Put、賣Call顯示綠色。單位：'+unitLabel()+'</caption>';
+  tb.innerHTML=h;
+}
+
+function setDate(d){ cDate=d; cExp=null; renderAll(); }
+function setSess(s){ cSess=s; cExp=null; renderAll(); }
+function setExp(e){ cExp=e; const entry=index.find(x=>x.date===cDate&&x.session===cSess); loadSnapshot(entry).then(snap=>renderDetailSection([...snap.exps].sort((a,b)=>expInfo(a.exp).t-expInfo(b.exp).t))); }
+function setChartGroup(g){ cChartGroup=g; const entry=index.find(x=>x.date===cDate&&x.session===cSess); loadSnapshot(entry).then(snap=>renderChart(snap.exps.find(e=>e.exp===cExp))); }
+function setTopN(n){ cTopN=+n; const entry=index.find(x=>x.date===cDate&&x.session===cSess); loadSnapshot(entry).then(snap=>renderChart(snap.exps.find(e=>e.exp===cExp))); }
+function setUnit(u){ unit=u; try{ localStorage.setItem('txo_unit_v2',u); }catch(e){} renderAll(); }
+
+loadIndex();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+[
+ {
+  "key": "20260929_night",
+  "date": "20260929",
+  "session": "night",
+  "file": "snapshots/20260929_night.json",
+  "uploadedAt": 1790509631303
+ },
+ {
+  "key": "20260924_day",
+  "date": "20260924",
+  "session": "day",
+  "file": "snapshots/20260924_day.json",
+  "uploadedAt": 1790509598721
+ }
+]

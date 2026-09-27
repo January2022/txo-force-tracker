@@ -1,0 +1,69 @@
+name: Update TXO snapshots
+
+on:
+  schedule:
+    # 18:30 台北時間 = 10:30 UTC（日盤資料，約13:45/16:15收盤後可查）
+    - cron: '30 10 * * *'
+    # 07:30 台北時間 = 23:30 UTC 前一天（盤後/夜盤資料，約當日07:00後可查）
+    - cron: '30 23 * * *'
+  workflow_dispatch:
+    inputs:
+      session:
+        description: '要抓的時段'
+        required: true
+        default: 'day'
+        type: choice
+        options: [day, night]
+      periods:
+        description: '抓最近幾個到期月份(週別)'
+        required: false
+        default: '4'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: txo-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Determine session (for scheduled runs)
+        id: which
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "session=${{ inputs.session }}" >> "$GITHUB_OUTPUT"
+            echo "periods=${{ inputs.periods }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "30 10 * * *" ]; then
+            echo "session=day" >> "$GITHUB_OUTPUT"
+            echo "periods=4" >> "$GITHUB_OUTPUT"
+          else
+            echo "session=night" >> "$GITHUB_OUTPUT"
+            echo "periods=4" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch TAIFEX data and rebuild snapshot
+        run: node scripts/fetch_and_build.mjs "${{ steps.which.outputs.session }}" "${{ steps.which.outputs.periods }}"
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "Update ${{ steps.which.outputs.session }} snapshot [skip ci]"
+            git push
+          fi

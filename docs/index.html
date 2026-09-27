@@ -109,7 +109,7 @@ footer.note a{color:var(--accent)}
 <div id="body"></div>
 
 <footer class="note">
-  資料來源：臺灣期貨交易所「期貨商買賣日報表－選擇權」，由 <a href="https://github.com/January2022/txo-force-tracker" target="_blank" rel="noopener">GitHub Actions</a> 每日自動下載與分析（約日盤18:30、夜盤07:30 台北時間各跑一次），不需要任何人手動上傳。
+  資料來源：臺灣期貨交易所「期貨商買賣日報表－選擇權」，由 <a href="https://github.com/January2022/txo-force-tracker" target="_blank" rel="noopener">GitHub Actions</a> 每日自動下載與分析（約日盤16:30、夜盤07:30 台北時間各跑一次），不需要任何人手動上傳。
   分類依期貨商代號推估：F034（澳帝華期貨，主要造市商）單獨列出、不計入法人合計；證券商（代號S開頭）歸為自營；外商券商歸外資；公股行庫體系歸八大行庫；其餘期貨商歸「期貨經紀」。
   同一履約價、同一成交價若列出多家買賣方期貨商，成交量平均分給列出的期貨商（期交所未提供個別分量，為近似值）。推估價平取 Call／Put 均價最接近的履約價，以 K+C－P 推算。各履約價明細表僅顯示成交量最高的前 40 檔，總覽與力道判讀則以完整資料計算。
   分類規則寫死在 <code>scripts/lib.mjs</code>，如需調整請直接修改該檔案並提交。僅供研究參考，非投資建議。

@@ -8,7 +8,7 @@
 
 ## 運作方式
 
-1. `.github/workflows/update.yml` 每天約 18:30（日盤）、07:30（夜盤，台北時間）自動觸發，
+1. `.github/workflows/update.yml` 每天約 16:30（日盤）、07:30（夜盤，台北時間）自動觸發，
    也可以在 GitHub 網頁的 Actions 分頁手動點「Run workflow」立即執行。
 2. `scripts/fetch_and_build.mjs` 模擬期交所網頁「下載檔案」按鈕，下載當次各到期月份(週別)的
    Call/Put 成交明細，用 `scripts/lib.mjs` 的邏輯分類、彙總，寫成 JSON 存到 `docs/data/`。

@@ -7,6 +7,13 @@
   "uploadedAt": 1791340711163
  },
  {
+  "key": "20261007_day",
+  "date": "20261007",
+  "session": "day",
+  "file": "snapshots/20261007_day.json",
+  "uploadedAt": 1791387805462
+ },
+ {
   "key": "20261006_night",
   "date": "20261006",
   "session": "night",
